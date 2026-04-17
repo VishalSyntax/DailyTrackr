@@ -29,18 +29,19 @@ void main() {
     await tester.tap(find.byType(CheckboxListTile));
     await tester.pumpAndSettle();
 
-    final checkbox = tester.widget<Checkbox>(find.byType(Checkbox).first);
-    expect(checkbox.value, isTrue);
+    final tile = tester.widget<CheckboxListTile>(find.byType(CheckboxListTile));
+    expect(tile.value, isTrue);
     expect(storage.savedTasks.single.isCompleted, isTrue);
   });
 }
 
 class FakeTaskStorage implements TaskStorage {
   FakeTaskStorage({List<Task>? initialTasks})
-      : _initialTasks = initialTasks ?? const [];
+      : _initialTasks = List<Task>.from(initialTasks ?? const []),
+        savedTasks = List<Task>.from(initialTasks ?? const []);
 
   final List<Task> _initialTasks;
-  List<Task> savedTasks = [];
+  List<Task> savedTasks;
 
   @override
   Future<List<Task>> loadTasks() async => _initialTasks;

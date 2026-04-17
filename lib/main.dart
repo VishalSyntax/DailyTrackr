@@ -162,10 +162,22 @@ class Task {
   }
 
   factory Task.fromJson(Map<String, dynamic> json) {
+    final title = json['title'];
+    if (title is! String || title.trim().isEmpty) {
+      throw const FormatException('Invalid task title');
+    }
     return Task(
-      title: json['title'] as String? ?? '',
+      title: title,
       isCompleted: json['isCompleted'] as bool? ?? false,
     );
+  }
+
+  static Task? tryFromJson(Map<String, dynamic> json) {
+    try {
+      return Task.fromJson(json);
+    } on FormatException {
+      return null;
+    }
   }
 }
 
@@ -191,10 +203,18 @@ class SharedPreferencesTaskStorage implements TaskStorage {
       return const [];
     }
 
-    return decoded
-        .whereType<Map<String, dynamic>>()
-        .map(Task.fromJson)
-        .toList(growable: false);
+    final tasks = <Task>[];
+    for (final item in decoded) {
+      if (item is! Map<String, dynamic>) {
+        continue;
+      }
+      final task = Task.tryFromJson(item);
+      if (task != null) {
+        tasks.add(task);
+      }
+    }
+
+    return tasks;
   }
 
   @override
