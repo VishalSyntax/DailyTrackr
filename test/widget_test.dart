@@ -40,7 +40,7 @@ class FakeTaskStorage implements TaskStorage {
       : _initialTasks = initialTasks ?? const [];
 
   final List<Task> _initialTasks;
-  List<Task> savedTasks = const [];
+  List<Task> savedTasks = [];
 
   @override
   Future<List<Task>> loadTasks() async => _initialTasks;
