@@ -63,7 +63,63 @@ class HabitViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  
+  void setTab(int index) {
+    if (_selectedTabIndex == index) {
+      return;
+    }
+    _selectedTabIndex = index;
+    notifyListeners();
+  }
+
+  Future<void> refreshForNewDay() async {
+    final now = DateTime.now();
+    final isNewDay =
+        now.year != _today.year || now.month != _today.month || now.day != _today.day;
+
+    if (!isNewDay) {
+      return;
+    }
+
+    _normalizeToday();
+    _selectedCalendarDate = _today;
+    await _loadAllData();
+    notifyListeners();
+  }
+
+  Future<void> toggleTodayHabit(int index, bool value) async {
+    if (index < 0 || index >= _todayHabits.length) {
+      return;
+    }
+
+    final habit = _todayHabits[index];
+    await _storageService.setHabitCompletion(
+      habit: habit,
+      date: _today,
+      isCompleted: value,
+    );
+
+    await _loadTodayHabits();
+    await _loadAnalytics();
+    notifyListeners();
+  }
+
+  Future<void> toggleCalendarHabit(int index, bool value) async {
+    if (index < 0 || index >= _calendarHabits.length) {
+      return;
+    }
+
+    final habit = _calendarHabits[index];
+    await _storageService.setHabitCompletion(
+      habit: habit,
+      date: _selectedCalendarDate,
+      isCompleted: value,
+    );
+
+    await _loadCalendarHabits();
+    await _loadTodayHabits();
+    await _loadAnalytics();
+    notifyListeners();
+  }
 
   
 }
