@@ -120,6 +120,68 @@ class HabitViewModel extends ChangeNotifier {
     await _loadAnalytics();
     notifyListeners();
   }
+Future<void> addCustomHabit(String name) async {
+    await _storageService.addCustomHabit(name);
+    await _loadTodayHabits();
+    await _loadCalendarHabits();
+    await _loadAnalytics();
+    notifyListeners();
+  }
 
+  Future<void> addSpecialTaskForDate({
+    required String name,
+    required DateTime date,
+  }) async {
+    await _storageService.addSpecialTask(name: name, date: date);
+
+    await _loadCalendarHabits();
+    await _loadTodayHabits();
+    await _loadAnalytics();
+    notifyListeners();
+  }
+
+  Future<void> selectCalendarDate(DateTime date) async {
+    _selectedCalendarDate = DateTime(date.year, date.month, date.day);
+    await _loadCalendarHabits();
+    notifyListeners();
+  }
+
+  Future<void> _loadAllData() async {
+    await _loadTodayHabits();
+    await _loadCalendarHabits();
+    await _loadAnalytics();
+  }
+
+  Future<void> _loadTodayHabits() async {
+    _todayHabits = await _storageService.getHabitsForDate(_today);
+  }
+
+  Future<void> _loadCalendarHabits() async {
+    _calendarHabits =
+        await _storageService.getHabitsForDate(_selectedCalendarDate);
+  }
+
+  Future<void> _loadAnalytics() async {
+    final weekStart = _today.subtract(const Duration(days: 6));
+    final monthStart = DateTime(_today.year, _today.month, 1);
+
+    _weeklySummary = await _storageService.getSummary(
+      start: weekStart,
+      end: _today,
+    );
+
+    _monthlySummary = await _storageService.getSummary(
+      start: monthStart,
+      end: _today,
+    );
+
+    _streakCount = await _storageService.getCurrentStreak(fromDate: _today);
+  }
+
+  void _normalizeToday() {
+    final now = DateTime.now();
+    _today = DateTime(now.year, now.month, now.day);
+    _selectedCalendarDate = DateTime(now.year, now.month, now.day);
+  }
   
 }
