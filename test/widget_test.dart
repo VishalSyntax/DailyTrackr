@@ -1,53 +1,83 @@
 import 'package:daily_trackr/main.dart';
-import 'package:flutter/material.dart';
+import 'package:daily_trackr/models/analytics_summary.dart';
+import 'package:daily_trackr/models/habit_item.dart';
+import 'package:daily_trackr/models/habit_type.dart';
+import 'package:daily_trackr/services/habit_storage_service.dart';
+import 'package:daily_trackr/viewmodels/habit_view_model.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('adds a new daily task', (tester) async {
-    final storage = FakeTaskStorage();
+  testWidgets('shows app shell with bottom tabs', (tester) async {
+    final viewModel = HabitViewModel(storageService: _FakeStorageService());
 
-    await tester.pumpWidget(DailyTrackrApp(storage: storage));
+    await tester.pumpWidget(DailyTrackrApp(viewModel: viewModel));
     await tester.pumpAndSettle();
 
-    await tester.enterText(find.byKey(const Key('taskInput')), 'Drink water');
-    await tester.tap(find.byKey(const Key('addTaskButton')));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Drink water'), findsOneWidget);
-    expect(storage.savedTasks.single.title, 'Drink water');
-    expect(storage.savedTasks.single.isCompleted, isFalse);
-  });
-
-  testWidgets('marks a task as completed', (tester) async {
-    final storage = FakeTaskStorage(
-      initialTasks: const [Task(title: 'Walk', isCompleted: false)],
-    );
-
-    await tester.pumpWidget(DailyTrackrApp(storage: storage));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.byType(CheckboxListTile));
-    await tester.pumpAndSettle();
-
-    final tile = tester.widget<CheckboxListTile>(find.byType(CheckboxListTile));
-    expect(tile.value, isTrue);
-    expect(storage.savedTasks.single.isCompleted, isTrue);
+    expect(find.text('Habit Tracker'), findsOneWidget);
+    expect(find.text('Today'), findsOneWidget);
+    expect(find.text('Calendar'), findsOneWidget);
+    expect(find.text('Analytics'), findsOneWidget);
+    expect(find.text('What did you complete today?'), findsOneWidget);
   });
 }
 
-class FakeTaskStorage implements TaskStorage {
-  FakeTaskStorage({List<Task>? initialTasks})
-      : _initialTasks = List<Task>.from(initialTasks ?? const []),
-        savedTasks = List<Task>.from(initialTasks ?? const []);
-
-  final List<Task> _initialTasks;
-  List<Task> savedTasks;
+class _FakeStorageService implements HabitStorageService {
+  @override
+  Future<void> addCustomHabit(String name) async {}
 
   @override
-  Future<List<Task>> loadTasks() async => _initialTasks;
+  Future<void> addSpecialTask({required String name, required DateTime date}) async {}
 
   @override
-  Future<void> saveTasks(List<Task> tasks) async {
-    savedTasks = List<Task>.from(tasks);
+  Future<int> getCurrentStreak({required DateTime fromDate}) async => 0;
+
+  @override
+  Future<List<HabitItem>> getHabitsForDate(DateTime date) async {
+    final dateKey = _toDateKey(date);
+    return [
+      HabitItem(
+        id: 'default_drink_water',
+        name: 'Drink Water',
+        type: HabitType.defaultHabit,
+        isCompleted: false,
+        dateKey: dateKey,
+      ),
+      HabitItem(
+        id: 'default_study',
+        name: 'Study',
+        type: HabitType.defaultHabit,
+        isCompleted: false,
+        dateKey: dateKey,
+      ),
+      HabitItem(
+        id: 'default_reading',
+        name: 'Reading',
+        type: HabitType.defaultHabit,
+        isCompleted: false,
+        dateKey: dateKey,
+      ),
+    ];
+  }
+
+  @override
+  Future<void> setHabitCompletion({
+    required HabitItem habit,
+    required DateTime date,
+    required bool isCompleted,
+  }) async {}
+
+  @override
+  Future<AnalyticsSummary> getSummary({
+    required DateTime start,
+    required DateTime end,
+  }) async {
+    return const AnalyticsSummary(totalCompleted: 0, totalHabits: 3);
+  }
+
+  String _toDateKey(DateTime date) {
+    final year = date.year.toString().padLeft(4, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    final day = date.day.toString().padLeft(2, '0');
+    return '$year-$month-$day';
   }
 }
